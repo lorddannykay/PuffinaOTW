@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Baby Puffina Shower Games</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Include Socket.io client library -->
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content glass">
+      <h2>Welcome to Baby Puffina Shower Games!</h2>
+      <p>Enter your username to begin:</p>
+      <input type="text" id="usernameInput" placeholder="Your username">
+      <button id="loginBtn">Login</button>
+      <p id="loginError" class="error"></p>
+    </div>
+  </div>
+
+  <!-- Main App Container (hidden until login) -->
+  <div id="appContainer" class="hidden">
+    <!-- Navigation Tabs -->
+    <nav id="navTabs" class="glass">
+      <button class="tab-btn active" data-tab="trivia">Trivia Game</button>
+      <button class="tab-btn" data-tab="redbus">Redbus Puzzle</button>
+      <button class="tab-btn" data-tab="parents">Parents Battle</button>
+    </nav>
+
+    <!-- Trivia Game Section -->
+    <section id="triviaSection" class="game-section">
+      <h2>Baby Trivia</h2>
+      <div id="triviaDisplay" class="display-panel">
+        <div id="triviaQuestionContainer">
+          <h3 id="triviaQuestion"></h3>
+          <div id="triviaOptions" class="options"></div>
+        </div>
+      </div>
+      <div id="triviaLeaderboard" class="leaderboard">
+        <h3>Leaderboard</h3>
+        <ul id="triviaLeaderboardList"></ul>
+      </div>
+      <!-- Admin control for advancing trivia questions -->
+      <div id="triviaAdmin" class="admin-panel hidden">
+        <button id="triviaNextBtn">Next Trivia Question</button>
+      </div>
+    </section>
+
+    <!-- Redbus Puzzle Section -->
+    <section id="redbusSection" class="game-section hidden">
+      <h2>Redbus Puzzle Challenge</h2>
+      <div id="redbusDisplay" class="display-panel">
+        <img id="redbusImage" class="puzzle-image" src="" alt="Redbus Puzzle">
+        <h3 id="redbusQuestion"></h3>
+        <div id="redbusOptions" class="options"></div>
+      </div>
+      <!-- Admin control for advancing redbus puzzles -->
+      <div id="redbusAdmin" class="admin-panel hidden">
+        <button id="redbusNextBtn">Next Redbus Puzzle</button>
+      </div>
+    </section>
+
+    <!-- Parents Battle Section -->
+    <section id="parentsSection" class="game-section hidden">
+      <h2>Parents Battle</h2>
+      <div id="parentsDisplay" class="display-panel">
+        <h3 id="parentsQuestion"></h3>
+        <div id="parentsOptions" class="options">
+          <!-- Options: Craig, Saranya, Both -->
+          <button class="option-btn" data-option="Craig">Craig (Father)</button>
+          <button class="option-btn" data-option="Saranya">Saranya (Mother)</button>
+          <button class="option-btn" data-option="Both">Both</button>
+        </div>
+      </div>
+      <!-- Live animated bar graph for Parents Battle -->
+      <div id="parentsGraph" class="graph">
+        <div class="bar" id="barCraig"><span>Craig: 0</span></div>
+        <div class="bar" id="barSaranya"><span>Saranya: 0</span></div>
+        <div class="bar" id="barBoth"><span>Both: 0</span></div>
+      </div>
+      <!-- Admin control for advancing parents battle questions -->
+      <div id="parentsAdmin" class="admin-panel hidden">
+        <button id="parentsNextBtn">Next Parents Battle Question</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

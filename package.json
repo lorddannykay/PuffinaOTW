@@ -1,0 +1,14 @@
+{
+    "name": "baby-shower-app",
+    "version": "1.0.0",
+    "description": "Sequential, admin-controlled multi-game baby shower app with Trivia, Redbus Puzzle, and Parents Battle modules",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "dependencies": {
+      "express": "^4.18.2",
+      "socket.io": "^4.6.1"
+    }
+  }
+  
