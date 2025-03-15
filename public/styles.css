@@ -1,25 +1,34 @@
-/* Body */
-body {
+/* Reset/Global */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Body */
+  body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #333;
     color: #333;
     overflow-x: hidden;
     overflow-y: auto;
+    /* Use safe-area insets for iPhone */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   
-  /* Fullscreen background video */
+  /* Fullscreen background video (improved scaling on iPhone) */
   #bgVideo {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 100vw;       /* Fill viewport width */
+    height: 100vh;      /* Fill viewport height */
+    object-fit: cover;  /* Crop edges to fill screen (use 'contain' if you prefer letterboxing) */
     z-index: -1;
   }
   
-  /* Modal */
+  /* Modal (centered overlay) */
   .modal {
     position: fixed;
     top: 0; left: 0;
