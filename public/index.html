@@ -2,43 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Welcome to Baby Puffina Shower Games</title>
+  <title>Baby Puffina Shower Games</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css">
   <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-  <!-- Background video or image if desired -->
-  <video
-    autoplay
-    muted
-    loop
-    playsinline
-    id="bgVideo"
-  >
+  <video autoplay muted loop playsinline id="bgVideo">
     <source src="assets/homepage.mp4" type="video/mp4">
   </video>
 
-  <!-- Login Modal -->
   <div id="loginModal" class="modal">
     <div class="modal-content glass">
-      <h2></h2>
-      <p>Enter your firstname to begin:</p>
-      <input type="text" id="usernameInput" placeholder="Your firstname">
-      <button id="loginBtn">Let's goooo!</button>
+      <h2>Welcome to Baby Puffina Shower Games!</h2>
+      <p>Enter your username to begin:</p>
+      <input type="text" id="usernameInput" placeholder="Your username">
+      <button id="loginBtn">Login</button>
       <p id="loginError" class="error"></p>
     </div>
   </div>
 
-  <!-- Main App Container (hidden until login) -->
   <div id="appContainer" class="hidden">
-    <!-- Navigation Tabs -->
     <nav id="navTabs" class="glass">
       <button class="tab-btn active" data-tab="trivia">Trivia Game</button>
-      <button class="tab-btn" data-tab="parents">Parental Quick Shots</button>
+      <button class="tab-btn" data-tab="parents">Parental Quickshots</button>
     </nav>
 
-    <!-- Trivia Game Section -->
     <section id="triviaSection" class="game-section">
       <h2>Baby Trivia</h2>
       <div id="triviaDisplay" class="display-panel">
@@ -56,15 +45,12 @@
       </div>
     </section>
 
-    <!-- Parental Quickshots Section -->
     <section id="parentsSection" class="game-section hidden">
       <h2>Parental Quickshots</h2>
       <div id="parentsDisplay" class="display-panel">
         <h3 id="parentsQuestion"></h3>
         <div id="parentsOptions" class="options">
-          <button class="option-btn" data-option="Craig">Craig (Father)</button>
-          <button class="option-btn" data-option="Saranya">Saranya (Mother)</button>
-          <button class="option-btn" data-option="Both">Both</button>
+          <!-- Options will be generated dynamically -->
         </div>
       </div>
       <div id="parentsGraph" class="graph">

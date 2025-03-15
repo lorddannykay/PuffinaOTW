@@ -16,7 +16,9 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// USER ROLES
+/*---------------------------------------------------------
+  USER ROLES
+---------------------------------------------------------*/
 const adminIDs = ["Dhani_Admin", "Shaheera_Admin", "Craig_Admin", "Saranya_Admin"];
 const parentIDs = ["Saranya_Parent", "Craig_Parent"];
 const guestIDs = [
@@ -32,7 +34,9 @@ function getUserRole(username) {
   return null;
 }
 
-// GAME 1: Trivia
+/*---------------------------------------------------------
+  GAME 1: TRIVIA GAME (Baby Trivia)
+---------------------------------------------------------*/
 const triviaQuestions = [
   {
     id: 1,
@@ -159,9 +163,9 @@ const triviaQuestions = [
 let currentTriviaIndex = 0;
 let triviaScores = {};
 
-// GAME 2 was Redbus Puzzle - now removed
-
-// GAME 3: Parents Battle
+/*---------------------------------------------------------
+  GAME 3: PARENTAL QUICKSHOTS (Parents Game)
+---------------------------------------------------------*/
 const parentBattleQuestions = [
   { id: 1, question: "Who’s more likely to Google every pregnancy symptom?" },
   { id: 2, question: "Who had the most bizarre pregnancy cravings?" },
@@ -182,18 +186,23 @@ const parentBattleQuestions = [
   { id: 17, question: "Who is most likely to dress Puffina in the weirdest outfits?" },
   { id: 18, question: "Who’s most likely to make up a bedtime story on the spot?" },
   { id: 19, question: "Who will be the first to panic if Puffina gets a small scratch?" },
-  { id: 20, question: "Who will be the one reading all the baby product reviews before buying anything?" }
+  { id: 20, question: "Bonus Question: Who is Puffina's coolest uncle?", options: ["Dhanikesh Karunanithi", "Dhani", "Dhanu Maama"], isBonus: true }
 ];
 
 let currentParentIndex = 0;
 let parentBattleVotes = {};
 parentBattleQuestions.forEach(q => {
-  parentBattleVotes[q.id] = { "Craig": 0, "Saranya": 0, "Both": 0 };
+  if (!q.isBonus) {
+    parentBattleVotes[q.id] = { "Craig": 0, "Saranya": 0, "Both": 0 };
+  } else {
+    parentBattleVotes[q.id] = {};
+    q.options.forEach(opt => {
+      parentBattleVotes[q.id][opt] = 0;
+    });
+  }
 });
 
-// Socket.io
-const users = {}; // optional if you want to store user data
-
+// SOCKET.IO EVENTS
 io.on("connection", (socket) => {
   console.log("New socket connected");
 
@@ -205,8 +214,6 @@ io.on("connection", (socket) => {
     }
     socket.username = username;
     socket.role = role;
-
-    // Send initial state
     socket.emit("login_success", {
       username,
       role,
@@ -219,7 +226,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Admin controls to advance questions
+  // Admin-controlled advance for Trivia and Parental Quickshots
   socket.on("advance_question", (data) => {
     if (socket.role !== "admin") return;
     const { game, index } = data;
@@ -232,7 +239,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Trivia answers
+  // Trivia Answers
   socket.on("trivia_answer", (data) => {
     const { questionId, answer } = data;
     const question = triviaQuestions.find(q => q.id === questionId);
@@ -244,7 +251,7 @@ io.on("connection", (socket) => {
     io.emit("update_trivia_scores", triviaScores);
   });
 
-  // Parents Battle responses
+  // Parental Quickshots Responses
   socket.on("parents_response", (data) => {
     const { questionId, response } = data;
     if (parentBattleVotes[questionId] && parentBattleVotes[questionId][response] !== undefined) {

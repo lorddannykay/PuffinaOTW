@@ -57,12 +57,12 @@
     margin: 10px;
   }
   
-  /* Hidden */
+  /* Hidden elements */
   .hidden {
     display: none;
   }
   
-  /* Nav Tabs */
+  /* Navigation Tabs */
   #navTabs {
     display: flex;
     justify-content: center;
@@ -177,7 +177,7 @@
     font-size: 0.9em;
   }
   
-  /* Responsive */
+  /* Responsive adjustments */
   @media (max-width: 600px) {
     .modal-content {
       max-width: 300px;
