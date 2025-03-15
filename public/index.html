@@ -8,6 +8,7 @@
   <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
+  <!-- Background video or image if desired -->
   <video
     autoplay
     muted
@@ -18,23 +19,26 @@
     <source src="assets/homepage.mp4" type="video/mp4">
   </video>
 
+  <!-- Login Modal -->
   <div id="loginModal" class="modal">
     <div class="modal-content glass">
-      <h2>Welcome to Baby Shower Games!</h2>
-      <p>Enter your firstname to begin:</p>
-      <input type="text" id="usernameInput" placeholder="Your firstname">
-      <button id="loginBtn">Let's gooo!</button>
+      <h2>Welcome to Baby Puffina Shower Games!</h2>
+      <p>Enter your username to begin:</p>
+      <input type="text" id="usernameInput" placeholder="Your username">
+      <button id="loginBtn">Login</button>
       <p id="loginError" class="error"></p>
     </div>
   </div>
 
+  <!-- Main App Container (hidden until login) -->
   <div id="appContainer" class="hidden">
+    <!-- Navigation Tabs -->
     <nav id="navTabs" class="glass">
       <button class="tab-btn active" data-tab="trivia">Trivia Game</button>
-      <button class="tab-btn" data-tab="redbus">Redbus Puzzle</button>
       <button class="tab-btn" data-tab="parents">Parents Battle</button>
     </nav>
 
+    <!-- Trivia Game Section -->
     <section id="triviaSection" class="game-section">
       <h2>Baby Trivia</h2>
       <div id="triviaDisplay" class="display-panel">
@@ -52,18 +56,7 @@
       </div>
     </section>
 
-    <section id="redbusSection" class="game-section hidden">
-      <h2>Redbus Puzzle Challenge</h2>
-      <div id="redbusDisplay" class="display-panel">
-        <img id="redbusImage" class="puzzle-image" src="" alt="Redbus Puzzle">
-        <h3 id="redbusQuestion"></h3>
-        <div id="redbusOptions" class="options"></div>
-      </div>
-      <div id="redbusAdmin" class="admin-panel hidden">
-        <button id="redbusNextBtn">Next Redbus Puzzle</button>
-      </div>
-    </section>
-
+    <!-- Parents Battle Section -->
     <section id="parentsSection" class="game-section hidden">
       <h2>Parents Battle</h2>
       <div id="parentsDisplay" class="display-panel">

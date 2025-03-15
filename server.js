@@ -8,15 +8,22 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Serve static files from the "public" folder
+// Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
-/*---------------------------------------------------------
-  USER ROLES
----------------------------------------------------------*/
+// Explicitly serve index.html at root
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// USER ROLES
 const adminIDs = ["Dhani_Admin", "Shaheera_Admin", "Craig_Admin", "Saranya_Admin"];
 const parentIDs = ["Saranya_Parent", "Craig_Parent"];
-const guestIDs = ["Karunanithi", "Porchelvi", "Brian", "Paula", "Julie", "Neil", "Shannon", "David", "Subha", "Ravi", "Aswini", "Brandi", "Becky", "Eli", "Ava", "Gideon", "Dan"];
+const guestIDs = [
+  "Karunanithi", "Porchelvi", "Brian", "Paula", "Julie",
+  "Neil", "Shannon", "David", "Subha", "Ravi", "Aswini",
+  "Brandi", "Becky", "Eli", "Ava", "Gideon", "Dan"
+];
 
 function getUserRole(username) {
   if (adminIDs.includes(username)) return "admin";
@@ -25,9 +32,7 @@ function getUserRole(username) {
   return null;
 }
 
-/*---------------------------------------------------------
-  GAME 1: TRIVIA GAME (Baby Trivia)
----------------------------------------------------------*/
+// GAME 1: Trivia
 const triviaQuestions = [
   {
     id: 1,
@@ -151,44 +156,12 @@ const triviaQuestions = [
   }
 ];
 
-// Keep track of the current trivia question index and user scores
 let currentTriviaIndex = 0;
-let triviaScores = {}; // { username: score }
+let triviaScores = {};
 
-/*---------------------------------------------------------
-  GAME 2: REDBUS PUZZLE CHALLENGE
----------------------------------------------------------*/
-const redbusPuzzles = [
-  {
-    id: 1,
-    image: "/assets/redbus1.jpg",
-    question: "Identify the model of this redbus.",
-    options: ["Model A", "Model B", "Model C", "Model D"],
-    correctAnswer: "Model A"
-  },
-  {
-    id: 2,
-    image: "/assets/redbus2.jpg",
-    question: "Which route is shown in this redbus image?",
-    options: ["Route 1", "Route 2", "Route 3", "Route 4"],
-    correctAnswer: "Route 3"
-  }
-  // Add additional puzzles (up to 20) similarly
-];
+// GAME 2 was Redbus Puzzle - now removed
 
-let currentRedbusIndex = 0;
-let redbusVotes = {}; // { puzzleId: { option: count } }
-redbusPuzzles.forEach(puzzle => {
-  redbusVotes[puzzle.id] = {};
-  puzzle.options.forEach(opt => {
-    redbusVotes[puzzle.id][opt] = 0;
-  });
-});
-
-/*---------------------------------------------------------
-  GAME 3: PARENTS BATTLE
-  (Using your 20 "Who's more likely..." questions)
----------------------------------------------------------*/
+// GAME 3: Parents Battle
 const parentBattleQuestions = [
   { id: 1, question: "Who’s more likely to Google every pregnancy symptom?" },
   { id: 2, question: "Who had the most bizarre pregnancy cravings?" },
@@ -213,20 +186,17 @@ const parentBattleQuestions = [
 ];
 
 let currentParentIndex = 0;
-// For each Parents Battle question, tally responses (from both admin and guests)
-// Structure: { questionId: { "Craig": count, "Saranya": count, "Both": count } }
 let parentBattleVotes = {};
 parentBattleQuestions.forEach(q => {
   parentBattleVotes[q.id] = { "Craig": 0, "Saranya": 0, "Both": 0 };
 });
 
-/*---------------------------------------------------------
-  SOCKET.IO EVENTS & SYNC
----------------------------------------------------------*/
+// Socket.io
+const users = {}; // optional if you want to store user data
+
 io.on("connection", (socket) => {
   console.log("New socket connected");
 
-  // Login handling
   socket.on("login", (username) => {
     const role = getUserRole(username);
     if (!role) {
@@ -235,43 +205,34 @@ io.on("connection", (socket) => {
     }
     socket.username = username;
     socket.role = role;
-    // Send initial state to client
+
+    // Send initial state
     socket.emit("login_success", {
       username,
       role,
       triviaQuestions,
-      redbusPuzzles,
       parentBattleQuestions,
       currentTriviaIndex,
-      currentRedbusIndex,
       currentParentIndex,
       triviaScores,
-      redbusVotes,
       parentBattleVotes
     });
   });
 
-  // ---------------------
-  // Admin-controlled advance (all games)
-  // data: { game: "trivia" | "redbus" | "parents", index: newIndex }
+  // Admin controls to advance questions
   socket.on("advance_question", (data) => {
     if (socket.role !== "admin") return;
     const { game, index } = data;
     if (game === "trivia") {
       currentTriviaIndex = index;
       io.emit("sync_trivia", { currentTriviaIndex });
-    } else if (game === "redbus") {
-      currentRedbusIndex = index;
-      io.emit("sync_redbus", { currentRedbusIndex });
     } else if (game === "parents") {
       currentParentIndex = index;
       io.emit("sync_parents", { currentParentIndex });
     }
   });
 
-  // ---------------------
-  // GAME 1: Trivia Answers
-  // data: { questionId, answer }
+  // Trivia answers
   socket.on("trivia_answer", (data) => {
     const { questionId, answer } = data;
     const question = triviaQuestions.find(q => q.id === questionId);
@@ -283,23 +244,7 @@ io.on("connection", (socket) => {
     io.emit("update_trivia_scores", triviaScores);
   });
 
-  // ---------------------
-  // GAME 2: Redbus Puzzle Votes
-  // data: { puzzleId, answer }
-  socket.on("redbus_vote", (data) => {
-    const { puzzleId, answer } = data;
-    if (redbusVotes[puzzleId] && redbusVotes[puzzleId][answer] !== undefined) {
-      redbusVotes[puzzleId][answer] += 1;
-      io.emit("update_redbus_votes", { puzzleId, votes: redbusVotes[puzzleId] });
-    }
-  });
-
-  // ---------------------
-  // GAME 3: Parents Battle Responses
-  // There are two events:
-  //  a) Admin enters the parents’ responses
-  //  b) Guests submit their guesses
-  // data: { questionId, response } where response is "Craig", "Saranya", or "Both"
+  // Parents Battle responses
   socket.on("parents_response", (data) => {
     const { questionId, response } = data;
     if (parentBattleVotes[questionId] && parentBattleVotes[questionId][response] !== undefined) {

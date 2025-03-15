@@ -4,13 +4,10 @@ const socket = io();
 let currentUser = null;
 let userRole = null;
 let triviaQuestions = [];
-let redbusPuzzles = [];
 let parentBattleQuestions = [];
 let currentTriviaIndex = 0;
-let currentRedbusIndex = 0;
 let currentParentIndex = 0;
 let triviaScores = {};
-let redbusVotes = {};
 let parentBattleVotes = {};
 
 // DOM
@@ -22,7 +19,6 @@ const appContainer = document.getElementById("appContainer");
 
 const tabBtns = document.querySelectorAll(".tab-btn");
 const triviaSection = document.getElementById("triviaSection");
-const redbusSection = document.getElementById("redbusSection");
 const parentsSection = document.getElementById("parentsSection");
 
 // Trivia
@@ -31,13 +27,6 @@ const triviaOptionsElem = document.getElementById("triviaOptions");
 const triviaLeaderboardList = document.getElementById("triviaLeaderboardList");
 const triviaNextBtn = document.getElementById("triviaNextBtn");
 const triviaAdminPanel = document.getElementById("triviaAdmin");
-
-// Redbus
-const redbusImage = document.getElementById("redbusImage");
-const redbusQuestionElem = document.getElementById("redbusQuestion");
-const redbusOptionsElem = document.getElementById("redbusOptions");
-const redbusNextBtn = document.getElementById("redbusNextBtn");
-const redbusAdminPanel = document.getElementById("redbusAdmin");
 
 // Parents
 const parentsQuestionElem = document.getElementById("parentsQuestion");
@@ -63,13 +52,10 @@ socket.on("login_success", (data) => {
   currentUser = data.username;
   userRole = data.role;
   triviaQuestions = data.triviaQuestions;
-  redbusPuzzles = data.redbusPuzzles;
   parentBattleQuestions = data.parentBattleQuestions;
   currentTriviaIndex = data.currentTriviaIndex;
-  currentRedbusIndex = data.currentRedbusIndex;
   currentParentIndex = data.currentParentIndex;
   triviaScores = data.triviaScores;
-  redbusVotes = data.redbusVotes;
   parentBattleVotes = data.parentBattleVotes;
 
   loginModal.style.display = "none";
@@ -77,12 +63,10 @@ socket.on("login_success", (data) => {
 
   if (userRole === "admin") {
     triviaAdminPanel.classList.remove("hidden");
-    redbusAdminPanel.classList.remove("hidden");
     parentsAdminPanel.classList.remove("hidden");
   }
 
   loadTriviaQuestion();
-  loadRedbusPuzzle();
   loadParentsQuestion();
 });
 
@@ -97,10 +81,8 @@ tabBtns.forEach(btn => {
 
 function showTab(tab) {
   triviaSection.classList.add("hidden");
-  redbusSection.classList.add("hidden");
   parentsSection.classList.add("hidden");
   if (tab === "trivia") triviaSection.classList.remove("hidden");
-  if (tab === "redbus") redbusSection.classList.remove("hidden");
   if (tab === "parents") parentsSection.classList.remove("hidden");
 }
 
@@ -147,41 +129,6 @@ socket.on("sync_trivia", (data) => {
 socket.on("update_trivia_scores", (scores) => {
   triviaScores = scores;
   updateTriviaLeaderboard();
-});
-
-// REDBUS
-function loadRedbusPuzzle() {
-  if (!redbusPuzzles.length) return;
-  const puzzle = redbusPuzzles[currentRedbusIndex];
-  redbusImage.src = puzzle.image;
-  redbusQuestionElem.textContent = `Puzzle ${puzzle.id}: ${puzzle.question}`;
-  redbusOptionsElem.innerHTML = "";
-  puzzle.options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.className = "option-btn";
-    btn.textContent = opt;
-    btn.addEventListener("click", () => {
-      socket.emit("redbus_vote", { puzzleId: puzzle.id, answer: opt });
-      btn.classList.add("selected");
-      setTimeout(() => btn.classList.remove("selected"), 500);
-    });
-    redbusOptionsElem.appendChild(btn);
-  });
-}
-
-redbusNextBtn.addEventListener("click", () => {
-  if (userRole !== "admin") return;
-  currentRedbusIndex = (currentRedbusIndex + 1) % redbusPuzzles.length;
-  socket.emit("advance_question", { game: "redbus", index: currentRedbusIndex });
-});
-
-socket.on("sync_redbus", (data) => {
-  currentRedbusIndex = data.currentRedbusIndex;
-  loadRedbusPuzzle();
-});
-
-socket.on("update_redbus_votes", (data) => {
-  // Optional: handle real-time vote display if desired
 });
 
 // PARENTS
