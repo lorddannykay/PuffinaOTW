@@ -9,6 +9,8 @@ let currentTriviaIndex = 0;
 let currentParentIndex = 0;
 let triviaScores = {};
 let parentBattleVotes = {};
+let parentalScores = {};
+let parentResponses = {};
 
 // DOM Elements
 const loginModal = document.getElementById("loginModal");
@@ -16,10 +18,12 @@ const usernameInput = document.getElementById("usernameInput");
 const loginBtn = document.getElementById("loginBtn");
 const loginError = document.getElementById("loginError");
 const appContainer = document.getElementById("appContainer");
+const resetBtn = document.getElementById("resetBtn");
 
 const tabBtns = document.querySelectorAll(".tab-btn");
 const triviaSection = document.getElementById("triviaSection");
 const parentsSection = document.getElementById("parentsSection");
+const finalSection = document.getElementById("finalSection");
 
 // Trivia Elements
 const triviaQuestionElem = document.getElementById("triviaQuestion");
@@ -36,6 +40,10 @@ const barSaranya = document.getElementById("barSaranya");
 const barBoth = document.getElementById("barBoth");
 const parentsNextBtn = document.getElementById("parentsNextBtn");
 const parentsAdminPanel = document.getElementById("parentsAdmin");
+const setCorrectBtn = document.getElementById("setCorrectBtn");
+
+// Final Section Elements
+const finalLeaderboardList = document.getElementById("finalLeaderboardList");
 
 // LOGIN
 loginBtn.addEventListener("click", () => {
@@ -57,22 +65,40 @@ socket.on("login_success", (data) => {
   currentParentIndex = data.currentParentIndex;
   triviaScores = data.triviaScores;
   parentBattleVotes = data.parentBattleVotes;
-
+  parentalScores = data.parentalScores || {};
+  // Initialize parentResponses on client side if needed (server handles responses)
   loginModal.style.display = "none";
   appContainer.classList.remove("hidden");
 
   if (userRole === "admin") {
     triviaAdminPanel.classList.remove("hidden");
     parentsAdminPanel.classList.remove("hidden");
+    resetBtn.style.display = "inline-block";
   }
 
+  loadTriviaQuestion();
+});
+
+// Admin Reset
+resetBtn.addEventListener("click", () => {
+  if (userRole !== "admin") return;
+  socket.emit("reset_game");
+});
+
+socket.on("game_reset", (data) => {
+  currentTriviaIndex = data.currentTriviaIndex;
+  currentParentIndex = data.currentParentIndex;
+  triviaScores = data.triviaScores;
+  parentalScores = data.parentalScores;
+  parentBattleVotes = data.parentBattleVotes;
   loadTriviaQuestion();
   loadParentsQuestion();
 });
 
-// NAV TABS
+// NAV TABS (admin only)
 tabBtns.forEach(btn => {
   btn.addEventListener("click", () => {
+    if (userRole !== "admin") return;
     tabBtns.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     showTab(btn.getAttribute("data-tab"));
@@ -82,14 +108,16 @@ tabBtns.forEach(btn => {
 function showTab(tab) {
   triviaSection.classList.add("hidden");
   parentsSection.classList.add("hidden");
+  finalSection.classList.add("hidden");
   if (tab === "trivia") triviaSection.classList.remove("hidden");
   if (tab === "parents") parentsSection.classList.remove("hidden");
+  if (tab === "final") finalSection.classList.remove("hidden");
 }
 
 // TRIVIA GAME
 function loadTriviaQuestion() {
   if (currentTriviaIndex >= triviaQuestions.length) {
-    triviaQuestionElem.textContent = "Game Over!";
+    triviaQuestionElem.textContent = "Trivia Game Over!";
     triviaOptionsElem.innerHTML = "";
     return;
   }
@@ -127,6 +155,8 @@ triviaNextBtn.addEventListener("click", () => {
   } else {
     currentTriviaIndex = triviaQuestions.length;
     socket.emit("advance_question", { game: "trivia", index: currentTriviaIndex });
+    // Switch to parental game after trivia
+    socket.emit("switch_game", { game: "parents" });
   }
 });
 
@@ -143,7 +173,7 @@ socket.on("update_trivia_scores", (scores) => {
 // PARENTAL QUICKSHOTS
 function loadParentsQuestion() {
   if (currentParentIndex >= parentBattleQuestions.length) {
-    parentsQuestionElem.textContent = "Game Over!";
+    parentsQuestionElem.textContent = "Parental Quickshots Over!";
     parentsOptionsElem.innerHTML = "";
     return;
   }
@@ -151,7 +181,6 @@ function loadParentsQuestion() {
   parentsQuestionElem.textContent = `Q${q.id}: ${q.question}`;
   parentsOptionsElem.innerHTML = "";
   if (q.isBonus) {
-    // For bonus question, use provided options
     q.options.forEach(opt => {
       const btn = document.createElement("button");
       btn.className = "option-btn";
@@ -164,8 +193,8 @@ function loadParentsQuestion() {
       });
       parentsOptionsElem.appendChild(btn);
     });
+    setCorrectBtn.style.display = "inline-block";
   } else {
-    // Default options: Craig, Saranya, Both
     const defaultOptions = [
       { text: "Craig (Father)", value: "Craig" },
       { text: "Saranya (Mother)", value: "Saranya" },
@@ -183,6 +212,7 @@ function loadParentsQuestion() {
       });
       parentsOptionsElem.appendChild(btn);
     });
+    setCorrectBtn.style.display = "none";
   }
 }
 
@@ -194,6 +224,15 @@ parentsNextBtn.addEventListener("click", () => {
   } else {
     currentParentIndex = parentBattleQuestions.length;
     socket.emit("advance_question", { game: "parents", index: currentParentIndex });
+    // Finalize game: combine scores and show final leaderboard
+    let finalScores = {};
+    for (let user in triviaScores) {
+      finalScores[user] = triviaScores[user];
+    }
+    for (let user in parentalScores) {
+      finalScores[user] = (finalScores[user] || 0) + parentalScores[user];
+    }
+    socket.emit("finalize_game", finalScores);
   }
 });
 
@@ -207,6 +246,38 @@ socket.on("update_parents_votes", (data) => {
   updateBar(barCraig, "Craig", votes["Craig"]);
   updateBar(barSaranya, "Saranya", votes["Saranya"]);
   updateBar(barBoth, "Both", votes["Both"]);
+});
+
+socket.on("update_parental_scores", (scores) => {
+  parentalScores = scores;
+  console.log("Updated parental scores:", scores);
+});
+
+socket.on("final_leaderboard", (finalScores) => {
+  showTab("final");
+  finalLeaderboardList.innerHTML = "";
+  const sorted = Object.entries(finalScores).sort((a, b) => b[1] - a[1]);
+  sorted.forEach(([user, score]) => {
+    const li = document.createElement("li");
+    li.textContent = `${user}: ${score}`;
+    finalLeaderboardList.appendChild(li);
+  });
+});
+
+// Set Correct Answer for Parental Quickshots (Admin)
+setCorrectBtn.addEventListener("click", () => {
+  if (userRole !== "admin") return;
+  const q = parentBattleQuestions[currentParentIndex];
+  const correctAnswer = prompt("Enter the correct answer for this question (e.g., Craig, Saranya, Both, or for bonus, one of the options):");
+  if (correctAnswer) {
+    socket.emit("set_parents_correct", { questionId: q.id, correctAnswer });
+  }
+});
+
+socket.on("switch_game", (data) => {
+  if (data.game === "parents") {
+    showTab("parents");
+  }
 });
 
 function updateBar(barElem, label, count) {

@@ -15,9 +15,9 @@
   <div id="loginModal" class="modal">
     <div class="modal-content glass">
       <h2>Welcome to Baby Puffina Shower Games!</h2>
-      <p>Enter your username to begin:</p>
-      <input type="text" id="usernameInput" placeholder="Your username">
-      <button id="loginBtn">Login</button>
+      <p>Enter your firstname to begin:</p>
+      <input type="text" id="usernameInput" placeholder="Your Firstname">
+      <button id="loginBtn">Let's gooooo!</button>
       <p id="loginError" class="error"></p>
     </div>
   </div>
@@ -26,6 +26,7 @@
     <nav id="navTabs" class="glass">
       <button class="tab-btn active" data-tab="trivia">Trivia Game</button>
       <button class="tab-btn" data-tab="parents">Parental Quickshots</button>
+      <button class="tab-btn" id="resetBtn" style="display:none;">Reset Game</button>
     </nav>
 
     <section id="triviaSection" class="game-section">
@@ -50,7 +51,7 @@
       <div id="parentsDisplay" class="display-panel">
         <h3 id="parentsQuestion"></h3>
         <div id="parentsOptions" class="options">
-          <!-- Options will be generated dynamically -->
+          <!-- Options generated dynamically -->
         </div>
       </div>
       <div id="parentsGraph" class="graph">
@@ -59,7 +60,15 @@
         <div class="bar" id="barBoth"><span>Both: 0</span></div>
       </div>
       <div id="parentsAdmin" class="admin-panel hidden">
+        <button id="setCorrectBtn" style="display:none;">Set Correct Answer</button>
         <button id="parentsNextBtn">Next Parental Quickshots Question</button>
+      </div>
+    </section>
+
+    <section id="finalSection" class="game-section hidden">
+      <h2>Final Leaderboard</h2>
+      <div id="finalLeaderboard" class="leaderboard">
+        <ul id="finalLeaderboardList"></ul>
       </div>
     </section>
   </div>
