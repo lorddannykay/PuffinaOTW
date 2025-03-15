@@ -1,7 +1,6 @@
 // public/script.js
 const socket = io();
 
-// Global state
 let currentUser = null;
 let userRole = null;
 let triviaQuestions = [];
@@ -14,34 +13,33 @@ let triviaScores = {};
 let redbusVotes = {};
 let parentBattleVotes = {};
 
-// DOM Elements
+// DOM
 const loginModal = document.getElementById("loginModal");
 const usernameInput = document.getElementById("usernameInput");
 const loginBtn = document.getElementById("loginBtn");
 const loginError = document.getElementById("loginError");
 const appContainer = document.getElementById("appContainer");
 
-// Navigation Tabs
 const tabBtns = document.querySelectorAll(".tab-btn");
 const triviaSection = document.getElementById("triviaSection");
 const redbusSection = document.getElementById("redbusSection");
 const parentsSection = document.getElementById("parentsSection");
 
-// Trivia Elements
+// Trivia
 const triviaQuestionElem = document.getElementById("triviaQuestion");
 const triviaOptionsElem = document.getElementById("triviaOptions");
 const triviaLeaderboardList = document.getElementById("triviaLeaderboardList");
 const triviaNextBtn = document.getElementById("triviaNextBtn");
 const triviaAdminPanel = document.getElementById("triviaAdmin");
 
-// Redbus Elements
+// Redbus
 const redbusImage = document.getElementById("redbusImage");
 const redbusQuestionElem = document.getElementById("redbusQuestion");
 const redbusOptionsElem = document.getElementById("redbusOptions");
 const redbusNextBtn = document.getElementById("redbusNextBtn");
 const redbusAdminPanel = document.getElementById("redbusAdmin");
 
-// Parents Battle Elements
+// Parents
 const parentsQuestionElem = document.getElementById("parentsQuestion");
 const parentsOptionsElem = document.getElementById("parentsOptions");
 const barCraig = document.getElementById("barCraig");
@@ -50,8 +48,7 @@ const barBoth = document.getElementById("barBoth");
 const parentsNextBtn = document.getElementById("parentsNextBtn");
 const parentsAdminPanel = document.getElementById("parentsAdmin");
 
-// ---------------------
-// LOGIN HANDLING
+// LOGIN
 loginBtn.addEventListener("click", () => {
   const username = usernameInput.value.trim();
   if (!username) return;
@@ -78,27 +75,23 @@ socket.on("login_success", (data) => {
   loginModal.style.display = "none";
   appContainer.classList.remove("hidden");
 
-  // Show admin panels if user is admin
   if (userRole === "admin") {
     triviaAdminPanel.classList.remove("hidden");
     redbusAdminPanel.classList.remove("hidden");
     parentsAdminPanel.classList.remove("hidden");
   }
 
-  // Initialize each game display
   loadTriviaQuestion();
   loadRedbusPuzzle();
   loadParentsQuestion();
 });
 
-// ---------------------
-// NAVIGATION TABS
+// NAV TABS
 tabBtns.forEach(btn => {
   btn.addEventListener("click", () => {
     tabBtns.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    const tab = btn.getAttribute("data-tab");
-    showTab(tab);
+    showTab(btn.getAttribute("data-tab"));
   });
 });
 
@@ -111,8 +104,7 @@ function showTab(tab) {
   if (tab === "parents") parentsSection.classList.remove("hidden");
 }
 
-// ---------------------
-// TRIVIA GAME FUNCTIONS
+// TRIVIA
 function loadTriviaQuestion() {
   if (!triviaQuestions.length) return;
   const q = triviaQuestions[currentTriviaIndex];
@@ -124,7 +116,6 @@ function loadTriviaQuestion() {
     btn.textContent = opt;
     btn.addEventListener("click", () => {
       socket.emit("trivia_answer", { questionId: q.id, answer: opt });
-      // Disable options after answering (or provide visual feedback)
       Array.from(triviaOptionsElem.children).forEach(b => b.disabled = true);
     });
     triviaOptionsElem.appendChild(btn);
@@ -134,7 +125,6 @@ function loadTriviaQuestion() {
 
 function updateTriviaLeaderboard() {
   triviaLeaderboardList.innerHTML = "";
-  // Sort scores descending
   const sorted = Object.entries(triviaScores).sort((a, b) => b[1] - a[1]);
   sorted.forEach(([user, score]) => {
     const li = document.createElement("li");
@@ -144,7 +134,6 @@ function updateTriviaLeaderboard() {
 }
 
 triviaNextBtn.addEventListener("click", () => {
-  // Only admin can advance
   if (userRole !== "admin") return;
   currentTriviaIndex = (currentTriviaIndex + 1) % triviaQuestions.length;
   socket.emit("advance_question", { game: "trivia", index: currentTriviaIndex });
@@ -152,7 +141,6 @@ triviaNextBtn.addEventListener("click", () => {
 
 socket.on("sync_trivia", (data) => {
   currentTriviaIndex = data.currentTriviaIndex;
-  // Reset options for new question
   loadTriviaQuestion();
 });
 
@@ -161,8 +149,7 @@ socket.on("update_trivia_scores", (scores) => {
   updateTriviaLeaderboard();
 });
 
-// ---------------------
-// REDBUS GAME FUNCTIONS
+// REDBUS
 function loadRedbusPuzzle() {
   if (!redbusPuzzles.length) return;
   const puzzle = redbusPuzzles[currentRedbusIndex];
@@ -175,7 +162,6 @@ function loadRedbusPuzzle() {
     btn.textContent = opt;
     btn.addEventListener("click", () => {
       socket.emit("redbus_vote", { puzzleId: puzzle.id, answer: opt });
-      // Visual feedback: briefly highlight the button
       btn.classList.add("selected");
       setTimeout(() => btn.classList.remove("selected"), 500);
     });
@@ -195,29 +181,25 @@ socket.on("sync_redbus", (data) => {
 });
 
 socket.on("update_redbus_votes", (data) => {
-  // (Optional) You can update a vote tally display if desired.
-  console.log("Redbus votes updated for puzzle", data.puzzleId, data.votes);
+  // Optional: handle real-time vote display if desired
 });
 
-// ---------------------
-// PARENTS BATTLE FUNCTIONS
+// PARENTS
 function loadParentsQuestion() {
   if (!parentBattleQuestions.length) return;
   const q = parentBattleQuestions[currentParentIndex];
   parentsQuestionElem.textContent = `Q${q.id}: ${q.question}`;
-  // No need to render options as they are static buttons already in the HTML.
-  // (If you want to disable previous answers, you could add that logic here.)
 }
 
 parentsOptionsElem.querySelectorAll(".option-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const response = btn.getAttribute("data-option");
-    socket.emit("parents_response", { questionId: parentBattleQuestions[currentParentIndex].id, response });
-    // Visual feedback
+    socket.emit("parents_response", {
+      questionId: parentBattleQuestions[currentParentIndex].id,
+      response
+    });
     btn.classList.add("selected");
-    setTimeout(() => {
-      btn.classList.remove("selected");
-    }, 500);
+    setTimeout(() => btn.classList.remove("selected"), 500);
   });
 });
 
@@ -233,8 +215,7 @@ socket.on("sync_parents", (data) => {
 });
 
 socket.on("update_parents_votes", (data) => {
-  // Update the animated bar graph for Parents Battle.
-  const votes = data.votes;
+  const { questionId, votes } = data;
   updateBar(barCraig, "Craig", votes["Craig"]);
   updateBar(barSaranya, "Saranya", votes["Saranya"]);
   updateBar(barBoth, "Both", votes["Both"]);
@@ -242,6 +223,5 @@ socket.on("update_parents_votes", (data) => {
 
 function updateBar(barElem, label, count) {
   barElem.querySelector("span").textContent = `${label}: ${count}`;
-  // For demonstration, set width proportional to count (you can refine this)
   barElem.style.width = `${Math.min(count * 20, 100)}%`;
 }
